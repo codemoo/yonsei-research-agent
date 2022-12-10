@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"> -->
+    <link href="./styles.css" rel="stylesheet">
+    <title>연세대 전문연 유연근무표</title>
+  </head>
+  <body>
+    <main class="calendar-contain">
+
+      <section class="title-bar">
+        <!-- <button class="title-bar__burger">
+          <span class="burger__lines">Toggle Menu</span>
+        </button> -->
+        <span class="title-bar__year" id="year_title">
+          2022년 12월 전문연구요원 복무현황
+        </span>
+        <!-- <span class="title-bar__month">
+          Month
+        </span>-->
+        <div class="title-bar__controls">
+          <input type="text" name="" id="student_id" placeholder="학번">
+          <input type="password" name="" id="password" placeholder="비밀번호">
+          <button id="refresh_form">조회</button>
+        </div> 
+      </section>
+    
+      <aside class="calendar__sidebar">
+        <div class="sidebar__nav">
+          <!-- Icons by Icons8 -->
+          <!-- <span class="sidebar__nav-item" id="prev"><img class="icon icons8-Up" width="22px" height="22px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAxklEQVRYR+3VwQ2DMAyF4Z8NOkI36AodpZ2sjMAoHaWdoJWlIEXI4RHnwMWROAH2ZxuSiZPXdHJ+EjDagUcZ4Rwd5QjAkr9K4icQQkQBdfK1+BAiAvCShxG9gG3b6xGExtED8Gb+K6VbnNA3cRTQCl4DzNKNOALYC7oFdCMUQFXkAboQCvAGbkDrF2sBasQXuAIfb7NSgAtwB5bGTrcHWBFWhF3uUgC1wyqAen/4NExAdiA7kB3IDmQH5GGjHhg9DVV8eT8Bf2HqNiEP+isaAAAAAElFTkSuQmCC"></span>
+          <span class="sidebar__nav-item" id="next"><img class="icon icons8-Down" width="22px" height="22px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA4UlEQVRYR+2WgQnCMBBFXzdwBSdwBUfRyXQER3EUN1AOEgnxLrkkhYCkUFpI7/+Xf1fajcnHNtmfBTCawDu0sFunuzAYL4CVwEpgJbAS+P8EDsAZeBj/DbUELsAznKpE7WMkxSfgCtwVhRKAmN+AF3AM1x+JGkAUkUINwgKo1X1BagDyYElMA3Cbi7gHoASRAzSZtwBYEClAs3krgAYhQxbnI73XBrbrLdCK0p3m69bbYv79e2cgF9Agms17WpCCdPU830lvAlFHIORw93xvALO33oXRBLw+uw/hsHEUmJ7ABzErNiGyzfJcAAAAAElFTkSuQmCC"></span> -->
+          <span class="sidebar__nav-item" id="refresh"><img class="icon icons8-Refresh" id="refresh_icon" width="22px" height="22px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAABnUlEQVRIie3Wz04UQRAG8B9evS6i6K7GNfAmHDRxQ0QSYmK8mXhQQ3gCwkNwIBguqBsBY+LJJ9HoxWjif88SAQ/d40DY2Z2eHfbEl9Slu+r7unpqqotTjAhjCb4tdHAdbUzG9S94izfYxse6DtfCGnZxMMB28QTNYUU7+H2IdBMLuIaz0dpxbfPQ4X5hrqroA+xHoi6ulIi5jK0Ys4fzqaK3YuAeHqYG4y6WpdWQCfn1VhGtjI0oujVK0QmhQP7gUo28t6MVYlHI9nmNouP4Fm28yGk7Cs/XKNyV/+fdIqcP0aFdk+i8403m/5V3e2xmNsyVN/C1B+d3oZY0hH7by+HcEML9EnqZOXV6bPatwgRMRb53ZU5YWAQVsBA5XxQ5lCr7Csh696N+TgN/9ES05A2pUSPvQLwSsl0bpehSFP0hMdszWMG9CqKPhbf8L26mBl8Q3uMD7Cg3CFyVt9193E8VzTAnjDHZ6PMUdxwdfabi2jP56PMTN6qKZmhiXflhbxUXB5GmjCZNzGIG08KngM94j9dCFX9K4DzFyeMf/yKPlcbz+HgAAAAASUVORK5CYII="></span>
+          
+        </div>
+        <h2 class="sidebar__heading" id="today_heading"></h2>
+        <ul class="sidebar__list">
+          <li class="sidebar__list-item"><span class="list-item__time">출근시간</span> <span id="attend_time"></span></li>
+          <li class="sidebar__list-item"><span class="list-item__time">휴식시간</span> <span id="break_time"></span></li>
+          <li class="sidebar__list-item"><span class="list-item__time">퇴근시간</span> <span id="left_time"></span></li>
+          <li class="sidebar__list-item"><span class="list-item__time">근무시간</span> <span id="work_time"></span></li>
+          <!-- <li class="sidebar__list-item sidebar__list-item--complete"><span class="list-item__time">출근시간</span> Team Meeting</li> -->
+        </ul>
+      </aside>
+    
+      
+      <section class="calendar__days" id="calendar">
+        <section class="calendar__top-bar">
+          <span class="top-bar__days">월</span>
+          <span class="top-bar__days">화</span>
+          <span class="top-bar__days">수</span>
+          <span class="top-bar__days">목</span>
+          <span class="top-bar__days">금</span>
+          <span class="top-bar__days"></span>
+        </section>
+    
+        
+      </section>
+    
+    </main>
+    
+    
+    <!-- You can also require other files to run in this process -->
+    <script src="./utils.js"></script>
+    <script src="./renderer.js"></script>
+    <script>
+      
+
+    </script>
+  </body>
+</html>
