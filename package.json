@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder build",
+    "build": "electron-builder build -mwl -p always",
     "build:osx": "electron-builder build --mac",
     "build:linux": "npm run build:linux32 && npm run build:linux64",
     "build:linux32": "electron-builder --linux --ia32",
@@ -19,17 +19,17 @@
     "Electron",
     "Yonsei"
   ],
-  "author": "Codemoo",
-  "email": "hwanmooy@yonsei.ac.kr",
+  "author": "Codemoo <hwanmooy@yonsei.ac.kr>",
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^22.0.0",
-    "electron-builder": "^23.6.0"
+    "electron-builder": "^22.10.3"
   },
   "dependencies": {
     "electron-first-run": "^3.0.0",
     "electron-localshortcut": "^3.2.1",
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.1.0",
+    "request": "^2.88.2"
   },
   "build": {
     "productName": "YonseiResearchAgent",
@@ -42,6 +42,9 @@
       ]
     },
     "mac": {
+      "publish": [
+        "github"
+      ],
       "target": [
         "default"
       ]
@@ -50,6 +53,9 @@
       "title": "YonseiResearchAgent"
     },
     "win": {
+      "publish": [
+        "github"
+      ],
       "target": [
         {
           "target": "nsis",
@@ -61,16 +67,18 @@
       ]
     },
     "linux": {
+      "publish": [
+        "github"
+      ],
       "target": [
-        "AppImage", 
+        "AppImage",
         "deb",
-        "rpm",
         "zip",
         "tar.gz"
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
     }
