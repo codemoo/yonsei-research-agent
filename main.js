@@ -1,12 +1,10 @@
-// Modules to control application life and create native browser window
 const {app, BrowserWindow, ipcMain, session, ipcRenderer} = require('electron')
 const Store = require('electron-store');
-const store = new Store();
 const electronLocalshortcut = require('electron-localshortcut')
-const url = require('url')
 const path = require('path')
 var request = require('request');
-const { start } = require('repl');
+
+const store = new Store();
 
 let mainWindow = null
 let childWindow = null
@@ -186,7 +184,48 @@ function parseWorkInfo(month, student_id, password, resolve) {
       cookie_str += cookies[i]['name'] + '=' + cookies[i]['value'] + '; '
     }
 
+    let getHolidayInfo = () => new Promise((resolve) => {
+      // 공휴일 정보 
+      var options = {
+        'method': 'POST',
+        'url': 'https://underwood1.yonsei.ac.kr/com/csys/sscm/DataCtr/findHldy.do',
+        'headers': {
+          'Cookie': cookie_str,
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: '_menuId=MTA5NjIxODk2NTM3MTExMzcwMDA%3D&_menuNm=%EA%B0%9C%EC%9D%B8%EB%B3%84%EB%B3%B5%EB%AC%B4%EC%83%81%ED%99%A9%EB%B6%80&_pgmId=NDE2NzU5OTgzOTE%3D&'
+      
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        var r = JSON.parse(response.body);
+        mainWindow.webContents.send("getHolidayInfoFromMain", r);
+        resolve(r);
+      });
+    })
+
+    let getCodeInfo = () => new Promise((resolve) => {
+      // 복무상황변경 코드
+      var options = {
+        'method': 'POST',
+        'url': 'https://underwood1.yonsei.ac.kr/com/csys/sscm/CodeCtr/findCodeComboList.do',
+        'headers': {
+          'Cookie': cookie_str,
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: '_menuId=MTA5NjIxODk2NTM3MTExMzcwMDA%3D&_menuNm=%EA%B0%9C%EC%9D%B8%EB%B3%84%EB%B3%B5%EB%AC%B4%EC%83%81%ED%99%A9%EB%B6%80&_pgmId=NDE2NzU5OTgzOTE%3D&%40d1%23cmmnCd=STRP0020&%40d1%23useYn=&%40d1%23textMode=&%40d1%23outDS=dsSrvicDivCd&%40d1%23sts=&%40d1%23cmmnCd=STRP0030&%40d1%23useYn=&%40d1%23textMode=&%40d1%23outDS=dsSrvicDetlDivCd&%40d1%23sts=&%40d1%23cmmnCd=STRP0050&%40d1%23useYn=&%40d1%23textMode=&%40d1%23outDS=dsSrvicVartnAplySttusCd&%40d1%23sts=&%40d1%23cmmnCd=STRP0040&%40d1%23useYn=&%40d1%23textMode=&%40d1%23outDS=dsLastAprvlDivCd&%40d1%23sts=&%40d%23=%40d1%23&%40d1%23=dsCommExbuilderCodeParam&%40d1%23tp=ds&'
+      
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        var r = JSON.parse(response.body);
+        mainWindow.webContents.send("getCodeInfoFromMain", r);
+        resolve(r);
+      });
+    })
+    
     let getWeekInfo = () => new Promise((resolve) => {
+      // 해당월 주차 정보 
       var options = {
         'method': 'POST',
         'url': 'https://underwood1.yonsei.ac.kr/sch/strp/StrpsvCtr/findWeekPeriodList.do',
@@ -204,6 +243,7 @@ function parseWorkInfo(month, student_id, password, resolve) {
     })
 
     let getWorkHistory = (start_dt, i) => new Promise((resolve) => {
+      // 해당 주 출퇴근 정보
       var options = {
         'method': 'POST',
         'url': 'https://underwood1.yonsei.ac.kr/sch/strp/StrpsvCtr/findWeekTmCdSlfList.do',
@@ -218,6 +258,26 @@ function parseWorkInfo(month, student_id, password, resolve) {
         if (error) throw new Error(error);
         console.log(start_dt);
         resolve([JSON.parse(response.body), i]);
+      });
+    })
+
+    let getApplicationInfo = () => new Promise((resolve) => {
+      // 복무상황변경 신청내역 
+      var options = {
+        'method': 'POST',
+        'url': 'https://underwood1.yonsei.ac.kr/sch/strp/StrpsvCtr/findAplyForChgList.do',
+        'headers': {
+          'Cookie': cookie_str,
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: '_menuId=MTA5NjIxODk2NTM3MTExMzcwMDA%3D&_menuNm=%EA%B0%9C%EC%9D%B8%EB%B3%84%EB%B3%B5%EB%AC%B4%EC%83%81%ED%99%A9%EB%B6%80&_pgmId=NDE2NzU5OTgzOTE%3D&%40d1%23dclzDt='+month+'&%40d%23=%40d1%23&%40d1%23=dmCond&%40d1%23tp=dm&'
+      
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        var r = JSON.parse(response.body);
+        mainWindow.webContents.send("getApplicationInfoFromMain", r);
+        resolve(r);
       });
     })
     
@@ -236,15 +296,22 @@ function parseWorkInfo(month, student_id, password, resolve) {
         promises.push(p);
       }
 
+      getHolidayInfo()
+      getCodeInfo()
+      // getApplicationInfo()
+
       Promise.all(promises).then(() => {
-        console.log("All done");
-        console.log(work_info);
 
-        store.set('student_id', student_id);
-        store.set('password', password);
+        getApplicationInfo().then(() => {
+          console.log("All done");
+          console.log(work_info);
 
-        resolve(work_info);
-        childWindow.close();
+          store.set('student_id', student_id);
+          store.set('password', password);
+
+          resolve(work_info);
+          childWindow.close();
+        })
       })
       
     });

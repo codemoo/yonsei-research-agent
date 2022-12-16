@@ -35,5 +35,14 @@ contextBridge.exposeInMainWorld(
     startAuthListener: (func) => {
       ipcRenderer.on('getAuthInfoFromMain', (event, ...args) => func(event, ...args));
     },
+    startHolidayInfoListener: (func) => {
+      ipcRenderer.on('getHolidayInfoFromMain', (event, ...args) => func(event, ...args));
+    },
+    startCodeInfoListener: (func) => {
+      ipcRenderer.on('getCodeInfoFromMain', (event, ...args) => func(event, ...args));
+    },
+    startApplicationInfoFromMain: (func) => {
+      ipcRenderer.on('getApplicationInfoFromMain', (event, ...args) => func(event, ...args));
+    }
   }
 )

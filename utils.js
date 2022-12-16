@@ -1,3 +1,34 @@
+function calWorkTime(stime, etime) {
+  var stime_m = stime.getHours() * 60 + stime.getMinutes();
+  var etime_m = etime.getHours() * 60 + etime.getMinutes();
+
+  // Clip 0600 ~ 2400
+  stime_m = Math.max(stime_m, 6 * 60);
+  etime_m = Math.min(etime_m, 24 * 60); // TODO: 다음날로 넘어간 퇴근
+
+  // Lunch
+  var lunch_st = 11 * 60;
+  var lunch_et = 13 * 60;
+
+  var lunch_work = Math.min(Math.min(lunch_et, etime_m) - Math.max(lunch_st, stime_m), 60);
+  var lunch_rest = Math.min(lunch_et, etime_m) - Math.max(lunch_st, stime_m) - lunch_work;
+
+  // Dinner
+  var dinner_st = 18 * 60;
+  var dinner_et = 20 * 60;
+
+  var dinner_work = Math.min(Math.min(dinner_et, etime_m) - Math.max(dinner_st, stime_m), 60);
+  var dinner_rest = Math.min(dinner_et, etime_m) - Math.max(dinner_st, stime_m) - dinner_work;
+
+  // Rest
+  rest = Math.max(30, lunch_rest + dinner_rest);
+
+  var total_work_m = etime_m - stime_m - rest;
+  var total_work = (Math.floor((total_work_m / 60))).toString() + "시간 " + (total_work_m % 60).toString() + "분";
+
+  return [rest, total_work_m, total_work]
+}
+
 function strftime(sFormat, date) {
   if (!(date instanceof Date)) date = new Date();
   var nDay = date.getDay(),

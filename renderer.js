@@ -10,6 +10,9 @@ let current_date = new Date();
 let month = strftime("%Y%m", today);
 let work_info = undefined;
 let week_info = {};
+let holiday_info = undefined;
+let application_code = undefined;
+let application_info = undefined;
 
 document.getElementById('refresh').addEventListener('click', function() {
   submitForm();
@@ -26,9 +29,23 @@ document.addEventListener("DOMContentLoaded", function(){
   window.api.getAuth()
   // var student_id = document.getElementById("student_id").value;
   // var password   = document.getElementById("password").value;
+  const password_node = document.getElementById("password");
+  password_node.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+          submitForm();
+      }
+  });
+
+  const student_id_node = document.getElementById("student_id");
+  student_id_node.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+          submitForm();
+      }
+  });
  
 });
 
+// 인증 정보 수신
 window.api.startAuthListener((event, response) => {
   if (!response) return;
   console.log(response)
@@ -46,6 +63,30 @@ window.api.startAuthListener((event, response) => {
   if (student_id !== undefined && student_id !== "" && password !== undefined && password !== "") {
     submitForm();
   }
+});
+
+// 휴일 정보 수신
+window.api.startHolidayInfoListener((event, response) => {
+  if (!response) return;
+  holiday_info = response.dsCsys030;
+  console.log("휴일정보", holiday_info)
+  
+});
+
+// 복무상황변경 코드 수신
+window.api.startCodeInfoListener((event, response) => {
+  if (!response) return;
+  application_code = response;
+  console.log("복무상황변경 코드", application_code)
+  
+});
+
+// 복무상황변경 신청내역 수신
+window.api.startApplicationInfoFromMain((event, response) => {
+  if (!response) return;
+  application_info = response.dsStrp210;
+  console.log("복무상황변경 신청내역", application_info)
+  
 });
 
 function submitForm() {
@@ -70,7 +111,7 @@ function submitForm() {
   }})
 }
 
-
+// 복무 정보 수신
 window.api.startWorkInfoListener((event, response) => {
   if (!response) return;
   if (response === "wrong_password") {
@@ -80,6 +121,7 @@ window.api.startWorkInfoListener((event, response) => {
     work_info = parseWorkDays(response[month])
     renderWorkInfo(work_info);
     renderWorkDetail(work_info, current_date);
+    renderApplicationInfo(application_info, application_code);
   }
   document.getElementById("refresh_icon").classList.remove('rotate');
 });
@@ -105,8 +147,6 @@ function renderCalendar(today) {
     last_day_in_cal = last_day_in_cal.addDays(5 - strftime("%o", last_day_in_cal))
   }
 
-  console.log(strftime("%Y-%m-%d", first_day_in_cal))
-  // console.log(date.addDays(5));
   // Week Loop
 
   var d = new Date(first_day_in_cal.addDays(-1).getTime());
@@ -206,7 +246,8 @@ function parseWorkDays(response) {
       week_info[i] = {
         dispTotWorkTime: info["dispTotWorkTime"]
       }
-      console.log(info)
+      // console.log(info)
+      var temp_total_work_time_m = 0;
       for (var j=1;j<=5;j++) {
         var attend_time = info["attndDttm"+j.toString()];
         if (attend_time !== null) {
@@ -222,6 +263,7 @@ function parseWorkDays(response) {
           if (left_time !== null) {
             left_time = parseDateTime(left_time);
           }
+
           work_info[k] = {
             d: date,
             attend_time: attend_time,
@@ -230,8 +272,22 @@ function parseWorkDays(response) {
             left_time: left_time
 
           }
+
+          // 시스템 정상화 전 임시 스크립트 계산
+          if (left_time !== null) {
+            var work_result = calWorkTime(attend_time, left_time);
+            work_info[k]["break_time_m"] = work_result[0];
+            work_info[k]["work_time_m"] = work_result[1];
+            work_info[k]["work_time"] = work_result[2];
+
+            temp_total_work_time_m += work_info[k]["work_time_m"];
+          }
+          
         }       
       }
+
+      // override total week worktime with temp script
+      week_info[i].dispTotWorkTime = (Math.floor((temp_total_work_time_m / 60))).toString() + "시간 " + (temp_total_work_time_m % 60).toString() + "분";
     }
   }
 
@@ -259,25 +315,81 @@ function renderWorkInfo(work_info) {
 function renderWorkDetail(work_info, date) {
   var d = strftime("%Y%m%d", date);
   if (work_info[d] !== undefined) {
-    console.log(work_info[d]);
+    document.getElementById("attend_time").textContent = "";
+    document.getElementById("break_time").textContent = "";
+    document.getElementById("left_time").textContent = "";
+    document.getElementById("work_time").textContent = "";
+    document.getElementById("application").textContent = "";
+
+    if (work_info[d].attend_time !== null && work_info[d].attend_time !== undefined) {
+      console.log(work_info[d].attend_time)
+      document.getElementById("attend_time").textContent = strftime("%H시 %M분", work_info[d].attend_time);
+    }
+
+    if (work_info[d].break_time !== null && work_info[d].break_time !== undefined) {
+      document.getElementById("break_time").textContent = work_info[d].break_time;
+      // override with temp script
+      if (work_info[d].break_time_m !== null && work_info[d].break_time_m !== undefined) {
+        var break_time_m = work_info[d].break_time_m;
+        document.getElementById("break_time").textContent = (Math.floor((break_time_m / 60))).toString() + "시간 " + (break_time_m % 60).toString() + "분";
+      }
+    }
+    
+    if (work_info[d].left_time !== null && work_info[d].left_time !== undefined) {
+      document.getElementById("left_time").textContent = strftime("%H시 %M분", work_info[d].left_time);
+    }
+    if (work_info[d].work_time !== null && work_info[d].work_time !== undefined) {
+      document.getElementById("work_time").textContent = work_info[d].work_time;
+    }
+    if (work_info[d].application !== null && work_info[d].application !== undefined) {
+      document.getElementById("application").textContent = work_info[d].application;
+    }
+  } else {
+    console.error("No data");
 
     document.getElementById("attend_time").textContent = "";
     document.getElementById("break_time").textContent = "";
     document.getElementById("left_time").textContent = "";
     document.getElementById("work_time").textContent = "";
+    document.getElementById("application").textContent = "";
+  }
+}
 
-    document.getElementById("attend_time").textContent = strftime("%H시 %M분", work_info[d].attend_time);
+// 복무 상황 변경
+function renderApplicationInfo(info_list, code) {
+  info_list.sort((a, b) => parseInt(a.aplyDt) - parseInt(b.aplyDt));
 
-    if (work_info[d].break_time !== null) {
-      document.getElementById("break_time").textContent = work_info[d].break_time;
+  for (var i=0; i < info_list.length; i++) {
+    var info = info_list[i];
+
+    // 승인
+    var service_status = code.dsSrvicVartnAplySttusCd.find(o => o.code === info.srvicVartnAplySttusCd);
+    var service_division = code.dsSrvicDivCd.find(o => o.code === info.srvicDivCd);
+    var service_detail = code.dsSrvicDetlDivCd.find(o => o.code === info.srvicDetlDivCd);
+
+    var application_text = service_detail.fullNm + " (" + service_status.fullNm + ")";
+    
+    // TODO: 연차, 반차 등 시작/종료 시간에 맞춰 시간 계산
+    var sdate = info.aplyBeginDt.substr(0, 8);
+    var edate = info.aplyEndDt.substr(0, 8);
+
+    for(var date=parseInt(sdate); date<=parseInt(edate); date++) {
+      if (work_info[date] === undefined) {
+        work_info[date] = {}
+      }
+      
+      work_info[date]["application"] = application_text;
+
+      if (info.srvicVartnAplySttusCd == "30") {
+        var day_div = document.getElementById(date);
+        var task_span = day_div.childNodes[1];
+
+        day_div.classList.add('inactive');
+        task_span.textContent = service_detail.fullNm;
+      }
     }
-    if (work_info[d].left_time !== null) {
-      document.getElementById("left_time").textContent = strftime("%H시 %M분", work_info[d].left_time);
-    }
-    if (work_info[d].work_time !== null) {
-      document.getElementById("work_time").textContent = work_info[d].work_time;
-    }
-  } else {
-    console.error("No data");
+    // info.srvicVartnAplySttusCd : 10(작성중) 20(신청) 30(승인) 90(반려)
+    
+
   }
 }

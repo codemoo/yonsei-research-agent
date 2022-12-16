@@ -1,6 +1,6 @@
 {
   "name": "yonsei-research-agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "연세대학교 전문연구요원 유연근무표 어플리케이션",
   "main": "main.js",
   "scripts": {
